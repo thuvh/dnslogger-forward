@@ -14,10 +14,11 @@ CFLAGS = @CFLAGS@ @WARN_CFLAGS@
 
 named_version = @PACKAGE_NAME@-@PACKAGE_VERSION@
 
-INCLUDES = -I. -I$(srcdir) -I$(srcdir)/lib
+INCLUDES = -I. -I$(srcdir)/src
 LIBS = @LIBS@
 
 SRC_C_FILES := $(patsubst $(srcdir)/src/%,%,$(wildcard $(srcdir)/src/*.c))
+DEP_H_FILES := config.h $(wildcard $(srcdir)/src/*.h)
 INVENTORY := COPYING Makefile.in README doc/dnslogger-forward.8 \
 	config.guess config.sub configure.ac install-sh \
 	$(patsubst %,src/%,$(SRC_C_FILES)) \
@@ -27,12 +28,9 @@ INVENTORY := COPYING Makefile.in README doc/dnslogger-forward.8 \
 	testsuite/generate.pl
 DISTFILES_GENERATED = config.h.in stamp-h.in configure
 
-src_d_files := $(patsubst %.c,src/%.d,$(SRC_C_FILES))
 src_obj_files := $(patsubst %.c, src/%.o, $(SRC_C_FILES))
 
 all : dnslogger-forward$(exeext)
-
--include $(src_d_files)
 
 install:
 	$(INSTALL) -m 755 dnslogger-forward$(exeext) $(DESTDIR)$(bindir)/dnslogger-forward$(exeext)
@@ -48,7 +46,7 @@ dist:
 
 clean :
 	-rm dnslogger-forward
-	-rm src/*.o src/*.d
+	-rm src/*.o
 	-rm testsuite/*.out testsuite/FAILED
 	-rm stamp-dir
 
@@ -63,15 +61,8 @@ stamp-dir :
 	-mkdir testsuite
 	echo timestamp > stamp-dir
 
-src/%.o : $(srcdir)/src/%.c
-	$(CC) $(CFLAGS) $x(INCLUDES) \
-		-MMD -MF $(patsubst %.o,%.d, $@) \
-		-c -o $@ $<
-
-src/%.o : src/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) \
-		-MMD -MF $(patsubst %.o,%.d, $@) \
-		-c -o $@ $<
+src/%.o : $(srcdir)/src/%.c $(DEP_H_FILES)
+	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
 
 .PHONY : test test-diff
 
