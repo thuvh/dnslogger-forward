@@ -38,6 +38,9 @@ typedef struct
 /* Evaluates to a true value if DNS is an authoritative response
    packet. */
 
+#define DNS_TRUNCATION_P(DNS) ((DNS).flags & 0x0200)
+/* Evaluates to a true value if DNS is a truncated packet. */
+
 int dns_header_decode (const char *packet, size_t length, dns_header_t *header);
 /* Parses LENGTH bytes at PACKET as a DNS header and stores the result
    at HEADER.  Returns zero on error. */

@@ -99,6 +99,17 @@ test :
 			echo "FAILED test case: $$x" ; touch testsuite/FAILED ; \
 		fi \
 	done || true
+	@for x in $(patsubst $(srcdir)/testsuite/%.in,%,$(wildcard $(srcdir)/testsuite/D_*.in)) ; do \
+		$(VALGRIND) ./dnslogger-forward$(exeext) -D -T \
+			< $(srcdir)/testsuite/$$x.in \
+			> testsuite/$$x.out \
+			2>&1 ; \
+		if cmp $(srcdir)/testsuite/$$x.expected testsuite/$$x.out >/dev/null ; then \
+			: ; \
+		else \
+			echo "FAILED test case: $$x" ; touch testsuite/FAILED ; \
+		fi \
+	done || true
 	@if test -e testsuite/FAILED ; then \
 		echo "There were failed test cases." ; exit 1 ; \
 	else \

@@ -40,11 +40,15 @@ main (int argc, char **argv)
   log_set_program (PACKAGE_NAME);
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "Af:hi:Tv")) != -1)
+  while ((c = getopt (argc, argv, "ADf:hi:Tv")) != -1)
     switch (c)
       {
       case 'A':
         forward_authoritative_only = 1;
+        break;
+
+      case 'D':
+        forward_without_answers = 0;
         break;
 
       case 'f':
@@ -106,6 +110,8 @@ usage(void)
   puts ("  -i INTERFACE    interface to capture packets on");
   puts ("  -f EXPRESSION   filter expression (BPF syntax)");
   puts ("  -A              forward authoritative answers only");
+  puts ("  -D              do not forward empty answers");
+  puts ("  -T              enable testing mode (reads from standard input)");
   puts ("  -v              verbose output, include debugging messages");
   puts ("");
   puts ("  -h              this help message");

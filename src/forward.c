@@ -28,6 +28,7 @@
 #include <sys/socket.h>
 
 int forward_authoritative_only = 0;
+int forward_without_answers = 1;
 
 static int
 forward_decode_encode (const char* buffer, size_t length, forward_t *forward, size_t *forward_length)
@@ -63,6 +64,15 @@ forward_decode_encode (const char* buffer, size_t length, forward_t *forward, si
   if (! DNS_ANSWER_P (dns_header))
     {
       LOG_DEBUG (("Dropping question packet (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
+                  IPV4_FORMAT_ARGS (ip_header.source),
+                  IPV4_FORMAT_ARGS (ip_header.destination)));
+      return 0;
+    }
+
+  if (UNLIKELY ((!forward_without_answers) && dns_header.ancount == 0
+                && !DNS_TRUNCATION_P (dns_header)))
+    {
+      LOG_DEBUG (("Dropping packet without answers (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
                   IPV4_FORMAT_ARGS (ip_header.source),
                   IPV4_FORMAT_ARGS (ip_header.destination)));
       return 0;

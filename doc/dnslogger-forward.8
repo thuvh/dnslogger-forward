@@ -61,6 +61,10 @@ Instructs
 to forward only authoritative DNS answers.  Non-authoritative answers
 (and question packets) are dropped in this mode.
 .TP
+.B -D
+Drops DNS responses which do not contain any data in the answer
+section.  Truncated responses are still forwarded.
+.TP
 .B -T
 Activates the testing mode (which reads data from standard input).
 .TP
@@ -123,6 +127,12 @@ It is possible to list multiple hosts using the
 .B or
 operator, for example
 .BR "udp and src port 53 and (dst host 192.0.2.53 or dst host 192.0.2.54)" .
+.PP
+A further reduction in forwarded traffic is possible if the 
+.B -D
+option is used.  However, activating this option discards data that is
+present in the authority and additional sections (such as NS records)
+in packets whose answer section is empty.
 .SH "PRIVACY CONCERNS"
 .B dnslogger-forward
 only forwards DNS response packets, and never DNS query packets.  This

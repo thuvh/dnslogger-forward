@@ -40,6 +40,10 @@ void forward_process (const char *buffer, size_t length);
    valid one, it is dropped. */
 
 extern int forward_authoritative_only;
-/* If true, only forward authoritative answers. */
+/* If true, only forward authoritative answers.  (The default is
+   false.) */
+
+extern int forward_without_answers;
+/* If true, forward packets without answers (the default). */
 
 #endif /* FORWARD_H */
