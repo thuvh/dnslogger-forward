@@ -7,7 +7,6 @@ AC_EXEEXT
 dnl Checks for programs.
 AC_PROG_INSTALL
 AC_PROG_CC
-AC_PROG_CXX
 
 if test "$GCC" = "yes" ; then
   AC_SUBST([WARN_CFLAGS], [-Wall])
@@ -30,6 +29,8 @@ dnl Checks for libraries.
 AC_SEARCH_LIBS(gethostbyname, nsl)
 AC_SEARCH_LIBS(connect, socket)
 AC_SEARCH_LIBS(pcap_open_live, pcap)
+
+AC_CHECK_FUNCS([pcap_datalink_val_to_name])
 
 dnl Handle <stdint.h>.
 AH_BOTTOM([/* Include <stdint.h> where available.

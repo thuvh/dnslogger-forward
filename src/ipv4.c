@@ -95,10 +95,14 @@ ipv4_checksum (const char *buffer, size_t length, uint32_t start)
   /* Points one byte past the end of the buffer. */
   const unsigned char *end;
 
+  /* The final checksum. */
+  uint32_t sum;
+
   /* The intermediate checksum counters.  We need 32 bits because we
      must preserve the higher bits to compensate for carries. */
   uint32_t a, b;
   a = 0; b = 0;
+
 
   /* If the buffer length is not even, we have to treat the trailing
      byte in a special way.  After that, the length is even. */
@@ -118,7 +122,7 @@ ipv4_checksum (const char *buffer, size_t length, uint32_t start)
     }
 
   /* Combine both counters and return the value. */
-  uint32_t sum = (a << 8) + b;
+  sum = (a << 8) + b;
   sum += start;
   return ~((sum & 0xFFFF) + (sum >> 16));
 }

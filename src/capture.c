@@ -121,8 +121,13 @@ void open_and_wait (void)
         break;
 
       default:
+#ifdef HAVE_PCAP_DATALINK_VAL_TO_NAME
         log_fatal ("Could not determine link layer header length for %s (%d).",
                    pcap_datalink_val_to_name(pcap_datalink(pcap)), pcap_datalink(pcap));
+#else
+        log_fatal ("Could not determine link layer header length for link type %d.",
+                   pcap_datalink(pcap));
+#endif
       }
 
     /* We have successfully set up the capture process. */

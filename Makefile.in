@@ -11,6 +11,7 @@ exeext = @EXEEXT@
 
 CC = @CC@
 CFLAGS = @CFLAGS@ @WARN_CFLAGS@
+DEFS = @DEFS@
 
 named_version = @PACKAGE_NAME@-@PACKAGE_VERSION@
 
@@ -77,7 +78,7 @@ stamp-dir :
 	echo timestamp > stamp-dir
 
 src/%.o : $(srcdir)/src/%.c $(DEP_H_FILES)
-	$(CC) $(CFLAGS) $(INCLUDES) -c -o $@ $<
+	$(CC) $(CFLAGS) $(DEFS) $(INCLUDES) -c -o $@ $<
 
 .PHONY : test test-diff
 
@@ -116,7 +117,7 @@ test :
 			echo "FAILED test case: $$x" ; touch testsuite/FAILED ; \
 		fi \
 	done || true
-	@if test -e testsuite/FAILED ; then \
+	@if test -f testsuite/FAILED ; then \
 		echo "There were failed test cases." ; exit 1 ; \
 	else \
 		echo "All tests passed." ; \
