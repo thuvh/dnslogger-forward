@@ -9,7 +9,7 @@ AC_PROG_INSTALL
 AC_PROG_CC
 
 if test "$GCC" = "yes" ; then
-  AC_SUBST([WARN_CFLAGS], [-Wall])
+  AC_SUBST([WARN_CFLAGS], "-Wall -Wformat-nonliteral")
 fi
 
 dnl for C compiler properties.
