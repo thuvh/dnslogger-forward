@@ -339,13 +339,13 @@ So instead we use the macro below and test it against specific values.  */
 #endif
 
 /* These macros are used to express branch prediction hints in
-   conditions. */
+   conditions.  (Based on a similar idea in the Linux kernel.)  */
 #if GCC_VERSION >= 3000
 #define LIKELY(X) __builtin_expect(!!(X), 1)
 #define UNLIKELY(X) __builtin_expect(!!(X), 0)
 #else
-#define LIKELY(X) (X)
-#define UNLIKELY(X) (X)
+#define LIKELY(X) (!!(X))
+#define UNLIKELY(X) (!!(X))
 #endif
 
 #endif	/* ansidecl.h	*/
