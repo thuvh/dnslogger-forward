@@ -52,7 +52,8 @@ main (int argc, char **argv)
         break;
 
       case 'f':
-        opt_filter = optarg;
+        if (*optarg)
+          opt_filter = optarg;
         break;
 
       case 'h':
@@ -60,7 +61,8 @@ main (int argc, char **argv)
         break;
 
       case 'i':
-        opt_interface = optarg;
+        if (*optarg)
+          opt_interface = optarg;
         break;
 
       case 'T':

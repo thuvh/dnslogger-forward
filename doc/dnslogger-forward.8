@@ -40,7 +40,11 @@ the device is reopened on error, root privileges are not dropped.
 .SH OPTIONS
 .TP
 .B -i \fIinterface\fP
-Sets the capture interface.
+Sets the capture interface.  If
+.I interface
+is the empty string, the default interface (as determined by
+.BR libpcap )
+is used.
 .B dnslogger-forward
 continues to run even if the capture interface becomes unavailable, to
 deal with flapping interfaces.  It is not possible to detect an
@@ -53,7 +57,11 @@ Sets the BPF filter expression to
 .IR filter .
 The syntax of the filter expression is described in the
 .B tcpdump
-manual page.
+manual page.  An empty filter expression is ignored.  (Use the string
+.B udp
+instead.
+.B dnslogger-forward
+only forwards UDP packets anyway.)
 .TP
 .B -A
 Instructs
