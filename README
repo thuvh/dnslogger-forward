@@ -33,6 +33,8 @@ Requirements
 Installation
 ============
 
+(See below for installation instructions from the Subversion sources.)
+
 Compile the software using GNU make (on some systems, you have to
 invoke "gmake" instead of "make"):
 
@@ -65,10 +67,34 @@ compilers.  Errors in this area will be corrected, as time permits.
 Feel free to submit bug reports about such issue to
 <dnslogger-bugs@lists.enyo.de>.
 
+Installation from a Subversion checkout
+=======================================
+
+The Subversion repository is available at:
+
+svn://subversion.enyo.de/fw/software/dnslogger-forward/branches/public
+
+You can use the following svn command to copy the most recent version to
+the directory "dnslogger-forward" in the current directory.
+
+  $ URL=svn://subversion.enyo.de/fw/software/dnslogger-forward/branches/public
+  $ svn co $URL dnslogger-forward
+
+The sources do not include the usual "configure" script, which has yet
+to be generated using autoconf (2.59 was used using development).  In
+order to invoke autoconf with the correct flags, you can use the
+following command (in the "dnslogger-forward" directory):
+
+  $ sh etc/autogen.sh
+  You may now invoke "./configure" and "make".
+  $ 
+
+After this command, follow the steps given in the previous section.
+
 Running dnslogger-forward
 =========================
 
-See the manpage for details.
+See the manpage (doc/dnslogger-forward.8) for details.
 
 How to contribute
 =================

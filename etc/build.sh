@@ -1,4 +1,0 @@
-autoconf
-autoheader
-./configure
-
