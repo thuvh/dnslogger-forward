@@ -1,3 +1,9 @@
+dnslogger-forward (0.1.1) unstable; urgency=low
+
+  * New version.  Fixes command line handling.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Sun,  2 Jan 2005 13:22:15 +0100
+
 dnslogger-forward (0.1.0) unstable; urgency=low
 
   * Initial Release.

@@ -132,7 +132,7 @@ forward_open (const char *hostname, uint16_t port)
 
   {
     unsigned a, b, c, d;
-    if (sscanf ("%u.%u.%u.%u", hostname, &a, &b, &c, &d) == 4
+    if (sscanf (hostname, "%u.%u.%u.%u", &a, &b, &c, &d) == 4
         && a <= 255 && b <= 255 && c <= 255 && d <= 255)
       sin.sin_addr.s_addr = htonl ((a << 24) + (b << 16) + (c << 8) + d);
     else
