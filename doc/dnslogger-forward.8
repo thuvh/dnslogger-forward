@@ -1,0 +1,192 @@
+.\" dnslogger-forward - Forward DNS traffic for analysis
+.\" Copyright (C) 2004 Florian Weimer
+.\"
+.\" This program is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.\"
+.TH DNSLOGGER-FORWARD 8 2004-10-14 "" ""
+.SH NAME
+dnslogger-forward \- Forward DNS traffic for analysis
+.SH SYNOPSIS
+.B dnslogger-forward
+.I [options] host port
+.SH DESCRIPTION
+.B dnslogger-forward
+captures DNS packets and forwards them to another host for analysis.
+Usually, this host is part of the passive DNS replication project.
+.PP
+The mandatory parameters
+.I host
+and
+.I port
+control to which host and port the data is sent.  The host name is
+only looked up once at program start.  A restart is required if the IP
+address changes.
+.PP
+.B dnslogger-forward
+requires root privileges to open the interface for capture.  Because
+the device is reopened on error, root privileges are not dropped.
+.SH OPTIONS
+.TP
+.B -i \fIinterface\fP
+Sets the capture interface.
+.B dnslogger-forward
+continues to run even if the capture interface becomes unavailable, to
+deal with flapping interfaces.  It is not possible to detect an
+incorrect interface name, but
+.B dnslogger-forward
+prints a warning if the interface cannot be opened.
+.TP
+.B -f \fIfilter\fP
+Sets the BPF filter expression to
+.IR filter .
+The syntax of the filter expression is described in the
+.B tcpdump
+manual page.
+.TP
+.B -A
+Instructs
+.B dnslogger-forward
+to forward only authoritative DNS answers.  Non-authoritative answers
+(and question packets) are dropped in this mode.
+.TP
+.B -T
+Activates the testing mode (which reads data from standard input).
+.TP
+.B -v
+Turns on additional reporting to standard error.
+.TP
+.B -h
+Displays a short help message and exits.
+.SH "EXAMPLES"
+A careful selection of the
+.B -f
+option is imperative if large-scale caching DNS resolvers are
+monitored using
+.BR dnslogger-forward .
+If most network traffic is already discarded by the kernel,
+.B dnslogger-forward
+needs to less work.  Therefore, we give several examples how to achive
+this goal.
+.IP
+.PD 0
+.B dnslogger-forward -A target-host 23751
+.PD
+.PP
+This command only forwards authoriative answers.  If
+.B dnslogger-forward
+does not capture traffic to an authoriative nameserver for a frequent
+zone, this command will cut down the forwarded traffic to a reasonable
+level.  However, all UDP/53 traffic still forwarded from the kernel to
+the
+.B dnslogger-forward
+process.
+.IP
+.PD 0
+.B dnslogger-forward \e
+.IP "" 1in
+.B -f 'udp and src port 53 and dst net 192.0.2.0/24' \e
+.IP "" 1in
+.B -A target-host 23751
+.PD
+.PP
+This command forwards packets to the same host as before, but only if
+they come from UDP source port 53 and are targeted at hosts in the
+network 192.0.2.0/24.  Assuming that 192.0.2.0/24 does not contain any
+authoriative name servers (only caching resolvers), this command does
+not forward any traffic towards your authoritative nameservers.  Under
+normal circumstances, authoritative answers to caching resolvers
+result in a manageable amount of packets being forwarded (because of
+caching at the resolvers).  Furthermore, most queries to caching
+resolvers come from a high UDP port (greater than 1023), and are not
+source from port 53.  As a result, this command also reduces the
+traffic that is copied from the kernel to the
+.B dnslogger-forward
+process.
+.PP
+If you want to restrict the traffic to a particular host, use
+.B dst host 192.0.2.53
+instead of
+.BR "dst net 192.0.2.0/24" .
+It is possible to list multiple hosts using the
+.B or
+operator, for example
+.BR "udp and src port 53 and (dst host 192.0.2.53 or dst host 192.0.2.54)" .
+.SH "PRIVACY CONCERNS"
+.B dnslogger-forward
+only forwards DNS response packets, and never DNS query packets.  This
+means that this data is available from the domain name system, and
+therefore has already been published for reference.  The target IP
+address is always discarded by
+.BR dnslogger-forward ,
+to prevent correlating DNS resource records with Internet users.
+.PP
+The DNSXFR01 protocol used by
+.B dnslogger-forward
+includes an IP address which corresponds to the source IP address
+obtained from the IP header of the DNS response.  However, this IP
+address is suppressed if the answer is non-authoritative.  This means
+that this IP address does neither indicate a particular caching
+resolver, nor does it correspond to a client address, and
+confidentiality of
+.B dnslogger-forward
+users and their clients is therefore protected.
+.PP
+In theory, a passive DNS monitoring operator could use the IP address
+of the DNSXFR01 packets he or she receives and identify the submitting
+sensor.  However, the standard
+.B dnslogger
+implementation discards this data very early (not writing it to disk
+or to the permanent database), so that confidentiality is also
+protected at this point.
+.SH "SECURITY"
+The function
+.B forward_decode_encode in
+the
+.B forward.c
+contains the only place where a copy of a potentially unbounded number
+of bytes (depending on the captured packet) is made.  However, this
+copy operation is properly guarded with a length check.  Therefore, we
+are convinced that the code does not contain any write buffer
+overflows, and remote code injection is impossible.
+.PP
+At various places, read buffer overflows might occur (which could lead
+to data leaks).  We have made reasonable effort to prevent these
+defects, and believe that our test suite covers all important boundary
+checks.
+.PP
+After initialization, no dynamic memory allocation takes place, all
+loops are bounded by a fixed number of iterations, and there is no
+recursion.  This hopefully means that denial-of-service attacks (by
+memory and CPU exhaustion) are impossible.
+.PP
+The above statements assume that the
+.B libpcap
+library does not contain any security defects.  Defects in
+.B libpcap
+may or may not be inherited by
+.BR dnslogger-forward .
+.SH "BUGS"
+It should be possible to run
+.B dnslogger-forward
+as a background daemon.  Logging to
+.B syslog
+should be supported.
+.SH "REPORTING BUGS"
+Report bugs to <dnslogger-bugs@lists.enyo.de>.
+.SH AUTHOR
+.B dnslogger-forward
+was written by Florian Weimer.
+.SH "SEE ALSO"
+.BR tcpdump "(8)"

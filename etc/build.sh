@@ -1,0 +1,4 @@
+autoconf
+autoheader
+./configure
+

@@ -1,0 +1,62 @@
+What does it do?
+================
+
+dnslogger-forward implements a sensor for the passive DNS replication
+project.  A sensor forwards a subset of DNS traffic to a central
+monitoring station for analysis.
+
+The advantages of this C program over the Perl script that was
+distributed previously are increased performance and UDP checksum
+verification by the sensor.  (The Perl script happily forwards UDP
+packets with incorrect checksums.)  Furthermore, the C version uses a
+different protocol that optionally includes the authoritative name
+server addresses, which allows a collector to gather additional
+statistcs without endangering user privacy.  (See the manpage for
+details.).
+
+Keep in mind that dnslogger-forward is just a sensor.  For a working
+passive DNS replication infrastructure, you also need the collector.
+
+Requirements
+============
+
+  - an ANSI C compiler (GCC 3.3 works well)
+
+  - libpcap 0.8 (libpcap 0.7 should work, too)
+
+  - access to some DNS traffic
+
+  - some agreement with a DNS replication operator to submit data
+
+Installation
+============
+
+Compile the software using:
+
+  $ ./configure
+  $ make
+
+You may now run
+
+  $ make install
+
+to install dnslogger-forward to /usr/local/bin.  You can change this
+directory by invoking ./configure with the --prefix option (the
+default is --prefix=/usr/local).  However, dnslogger-forward does not
+need any configuration files and can run from within the build
+directory.
+
+Please note that the program may or may not compile with non-GNU
+compilers.  Errors in this area will be corrected, as time permits.
+
+Running dnslogger-forward
+=========================
+
+See the manpage for details.
+
+How to contribute
+=================
+
+Please contact Florian Weimer <fw@deneb.enyo.de> if you want to run
+dnslogger-forward and contribute to the passive DNS replication
+project.
