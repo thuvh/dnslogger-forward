@@ -1,0 +1,19 @@
+# Defaults for dnslogger-forward initscript
+# sourced by /etc/init.d/dnslogger-forward
+
+# The interface used for capturing packets.
+# Default: empty, use libpcap default.
+INTERFACE=""
+
+# The BPF filter expression.  See dnslogger-forward(8) for examples.
+# Default: empty, use dnslogger-forward built-in default.
+FILTER=""
+
+# Options like -A and -D, see dnslogger-forward(8).
+# Default: empty, no additional options.
+OPTIONS=""
+
+# Target for forwarding.  You must set these options, otherwise
+# dnslogger-forward will not start.
+HOST=""
+PORT=""

@@ -6,7 +6,7 @@ exec_prefix = @exec_prefix@
 bindir = @bindir@
 libdir = @libdir@
 mandir = @mandir@
-man1dir = $(mandir)/man1
+man8dir = $(mandir)/man8
 exeext = @EXEEXT@
 
 CC = @CC@
@@ -26,6 +26,21 @@ INVENTORY := COPYING Makefile.in README doc/dnslogger-forward.8 \
 	$(patsubst $(srcdir)/testsuite/%,testsuite/%,$(wildcard $(srcdir)/testsuite/*.in)) \
 	$(patsubst $(srcdir)/testsuite/%,testsuite/%,$(wildcard $(srcdir)/testsuite/*.expected)) \
 	testsuite/generate.pl
+
+# Debian files.
+INVENTORY += \
+	debian/README.Debian \
+	debian/changelog \
+	debian/compat \
+	debian/conffiles \
+	debian/control \
+	debian/copyright \
+	debian/dirs \
+	debian/dnslogger-forward-default \
+	debian/docs \
+	debian/init.d \
+	debian/rules
+
 DISTFILES_GENERATED = config.h.in stamp-h.in configure
 
 src_obj_files := $(patsubst %.c, src/%.o, $(SRC_C_FILES))
@@ -34,7 +49,7 @@ all : dnslogger-forward$(exeext)
 
 install:
 	$(INSTALL) -m 755 dnslogger-forward$(exeext) $(DESTDIR)$(bindir)/dnslogger-forward$(exeext)
-	$(INSTALL) -m 644 $(srcdir)/doc/dnslogger-forward$.8 $(DESTDIR)$(man1dir)/dnslogger-forward.8
+	$(INSTALL) -m 644 $(srcdir)/doc/dnslogger-forward.8 $(DESTDIR)$(man8dir)/dnslogger-forward.8
 
 dist:
 	mkdir $(named_version)

@@ -1,0 +1,9 @@
+dnslogger-forward for Debian
+----------------------------
+
+You have to edit the configuration settings in
+/etc/default/dnslogger-forward before dnslogger-forward can run.
+After that, dnslogger-forward is automatically started as a daemon on
+boot.
+
+ -- Florian Weimer <fw@deneb.enyo.de>, Sun Oct 17 14:18:02 2004

@@ -1,0 +1,5 @@
+dnslogger-forward (0.1.0) unstable; urgency=low
+
+  * Initial Release.
+
+ -- Florian Weimer <fw@deneb.enyo.de>  Sun, 17 Oct 2004 13:24:09 +0200

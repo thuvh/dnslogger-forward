@@ -1,0 +1,13 @@
+Source: dnslogger-forward
+Section: net
+Priority: optional
+Maintainer: Florian Weimer <fw@deneb.enyo.de>
+Build-Depends: debhelper (>= 4.0.0), libpcap0.8-dev | libpcap0.7-dev
+Standards-Version: 3.6.1
+
+Package: dnslogger-forward
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Forward DNS packets to another host for analysis
+ dnslogger-forward captures DNS responses and forwards them to another
+ host for analysis.

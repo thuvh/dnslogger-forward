@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([dnslogger-forward],[0.0.1],[fw@deneb.enyo.de])
+AC_INIT([dnslogger-forward],[0.1.0],[fw@deneb.enyo.de])
 
 AC_CANONICAL_TARGET
 AC_EXEEXT
