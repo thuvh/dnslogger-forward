@@ -36,6 +36,17 @@ Compile the software using:
   $ ./configure
   $ make
 
+Run the test suite:
+
+  $ make test
+  All tests passed.
+  $ 
+
+If there are any error messages, please send a bug report to
+<dnslogger-bugs@lists.enyo.de>, including the error messages, your
+operating system and version, your C compiler and version, and the
+version of your system's libpcap library.
+
 You may now run
 
   $ make install
