@@ -160,7 +160,7 @@ callback (u_char *closure, const struct pcap_pkthdr *header, const u_char *packe
   bytes_received += size;
 
   /* Parse the packet and forward it if necessary. */
-  if (forward_process (packet, size))
+  if (forward_process ((const char *)packet, size))
     {
       ++packets_forwarded;
       bytes_forwarded += size;

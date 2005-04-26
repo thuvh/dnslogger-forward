@@ -276,7 +276,7 @@ int
 forward_process (const char *buffer, size_t length)
 {
   forward_t fwd;
-  size_t fwd_length;
+  size_t fwd_length = 0;
 
   if (LIKELY (forward_decode_encode (buffer, length, &fwd, &fwd_length)))
     {
