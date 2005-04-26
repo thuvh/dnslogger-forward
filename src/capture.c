@@ -26,11 +26,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifndef HAVE_PCAP_BREAKLOOP
-#error Your libpcap version does not support pcap_breakloop.
-#error At least version 0.8 is required.
-#endif
-
 static const char* capture_interface;
 static const char* capture_filter;
 /* Stores the strings passed on the command line. */

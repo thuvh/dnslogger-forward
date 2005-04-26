@@ -24,7 +24,7 @@ Requirements
 
   - GNU make
 
-  - libpcap 0.8
+  - libpcap 0.8 (libpcap 0.7 should work, too)
 
   - access to some DNS traffic
 
