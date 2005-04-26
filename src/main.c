@@ -42,7 +42,7 @@ main (int argc, char **argv)
   log_set_program (PACKAGE_NAME);
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "ADf:hi:tTv")) != -1)
+  while ((c = getopt (argc, argv, "ADf:hi:L:tTv")) != -1)
     switch (c)
       {
       case 'A':
@@ -65,6 +65,12 @@ main (int argc, char **argv)
       case 'i':
         if (*optarg)
           opt_interface = optarg;
+        break;
+
+      case 'L':
+        capture_log_interval = atoi (optarg);
+        if (optarg <= 0)
+          log_fatal ("Argument to -L must be a positive number.");
         break;
 
       case 't':
@@ -133,6 +139,7 @@ usage(void)
   puts ("  -A              forward authoritative answers only");
   puts ("  -D              do not forward empty answers");
   puts ("  -t              forward data over TCP (default is UDP)");
+  puts ("  -L SECS         write a checkpoint log entry every SECS seconds");
   puts ("  -T              enable testing mode (reads from standard input)");
   puts ("  -v              verbose output, include debugging messages");
   puts ("");

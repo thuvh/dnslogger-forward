@@ -73,6 +73,12 @@ to forward only authoritative DNS answers.  Non-authoritative answers
 Drops DNS responses which do not contain any data in the answer
 section.  Truncated responses are still forwarded.
 .TP
+.B -L \fIseconds\fP
+Every
+.IR seconds ,
+.B dnslogger-forward
+writes a checkpoint entry to the system log (the default is 3600).
+.TP
 .B -t
 Forward over TCP instead of UDP.
 .TP
@@ -201,6 +207,59 @@ may or may not be inherited by
 .SH "LOGGING"
 .B dnslogger-forward
 logs to syslog (facility LOG_DAEMON).
+.P
+When
+.B dnslogger-forward
+has begun to forward DNS packets, it prints at least one log message.
+The absence of log messages indicates that no DNS responses are
+captured which match the filter specified with the
+.B -f
+option.
+.P
+The most common messages are listed below.
+.IP
+.PD 0
+.B connected to \fIA.B.C.D\fP (TCP): dnslogger/DNSXFR01
+.PD
+.PP
+.B dnslogger-forward
+has captured its first packet and successfully established
+a TCP connection to the
+.B dnslogger
+collector at IP address
+.IR A.B.C.D .
+The remote banner is
+.BR dnslogger/DNSXFR01 .
+.IP
+.PD 0
+.B forwarding to \fIA.B.C.D\fP (UDP)
+.PD
+.PP
+.B dnslogger-forward
+has captured its first packet, which is about to be forwarded to the
+.B dnslogger
+collector at
+.IR A.B.C.D .
+.IP
+.PD 0
+.B \fIx\fP packets/\fIy\fP bytes received,
+.B \fIx\fP packets/\fIy\fP bytes forwarded
+.PD
+.PP
+This is an example log checkpoint which is written at the interval
+specified with the
+.B -L
+option.
+.IP
+.PD 0
+.B could not write packet:
+.I error message
+.PD
+.PP
+A write operation on the socket which forwards packets to the
+.B dnslogger
+host failed.  In TCP mode, a new connection is established.  In UDP
+mode, a new UDP socket is created.
 .SH "BUGS"
 It should be possible to run
 .B dnslogger-forward

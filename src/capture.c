@@ -22,6 +22,8 @@
 #include "forward.h"
 
 #include <pcap.h>
+#include <syslog.h>
+#include <time.h>
 #include <unistd.h>
 
 #ifndef HAVE_PCAP_BREAKLOOP
@@ -52,9 +54,18 @@ capture_open (const char *interface, const char *filter)
   capture_filter = filter;
 }
 
+static time_t last_checkpoint;
+unsigned capture_log_interval = 3600;
+static unsigned packets_received = 0;
+static unsigned bytes_received = 0;
+static unsigned packets_forwarded = 0;
+static unsigned bytes_forwarded = 0;
+
 void
 capture_run (void)
 {
+  time (&last_checkpoint);
+
   /* Try to open the device.  Continue if capturing failes by
      reopening the device. */
   for (;;)
@@ -150,6 +161,26 @@ callback (u_char *closure, const struct pcap_pkthdr *header, const u_char *packe
     return;
   SKIP_BUFFER (packet, size, pcap_link_layer);
 
+  ++packets_received;
+  bytes_received += size;
+
   /* Parse the packet and forward it if necessary. */
-  forward_process (packet, size);
+  if (forward_process (packet, size))
+    {
+      ++packets_forwarded;
+      bytes_forwarded += size;
+    }
+
+  /* Write a log checkpoint if the timeout has passed. */
+  if (header->ts.tv_sec > last_checkpoint + capture_log_interval)
+    {
+      syslog (LOG_INFO, "%u packets/%u bytes received, "
+              "%u packets/%u bytes forwarded",
+              packets_received, bytes_received,
+              packets_forwarded, bytes_forwarded);
+
+      last_checkpoint = header->ts.tv_sec;
+      packets_received = bytes_received = 0;
+      packets_forwarded = bytes_forwarded = 0;
+    }
 }

@@ -33,6 +33,7 @@ int forward_authoritative_only = 0;
 int forward_without_answers = 1;
 int forward_over_tcp = 0;
 
+/* Returns nonzero if the packet should be forwarded. */
 static int
 forward_decode_encode (const char* buffer, size_t length, forward_t *forward, size_t *forward_length)
 {
@@ -207,7 +208,10 @@ forward_open (void)
             continue;
           *lf = 0;
           if (lf != buf && lf[-1] == '\r')
-            lf[-1] = 0;
+            {
+              lf[-1] = 0;
+              --lf;
+            }
 
           /* Replace non-printable characters. */
 
@@ -215,7 +219,10 @@ forward_open (void)
             if (*p < ' ' || *p > '~')
               *p = '.';
 
-          syslog (LOG_NOTICE, "Connected to: %s", buf);
+          syslog (LOG_NOTICE, "connected to " IPV4_FORMAT ":%hu (TCP): %s",
+                  IPV4_FORMAT_ARGS (htonl (dnslogger_target.sin_addr.s_addr)),
+                  ntohs (dnslogger_target.sin_port),
+                  buf);
           return 0;
         }
 
@@ -223,8 +230,14 @@ forward_open (void)
       goto error_out;
     }
   else
-    /* UDP mode needs no special setup. */
-    return 0;
+    {
+      /* UDP mode needs no special setup. */
+
+      syslog (LOG_NOTICE, "forwarding to " IPV4_FORMAT ":%hu (UDP)",
+              IPV4_FORMAT_ARGS (ntohl (dnslogger_target.sin_addr.s_addr)),
+              ntohs (dnslogger_target.sin_port));
+      return 0;
+    }
 
  error_out:
   close (dnslogger_fd);
@@ -259,17 +272,17 @@ forceful_write (int stream, const void *buf, size_t length)
   return 0;
 }
 
-void
+int
 forward_process (const char *buffer, size_t length)
 {
   forward_t fwd;
   size_t fwd_length;
 
-  if (dnslogger_fd < 0)
-    forceful_open ();
-
   if (LIKELY (forward_decode_encode (buffer, length, &fwd, &fwd_length)))
     {
+      if (UNLIKELY (dnslogger_fd < 0))
+        forceful_open ();
+
       /* Keep sending packets until successful. */
 
       for (;;)
@@ -292,7 +305,7 @@ forward_process (const char *buffer, size_t length)
                 goto retry;
               }
 
-              return;
+              return 1;
             }
           else
             {
@@ -306,11 +319,12 @@ forward_process (const char *buffer, size_t length)
                 }
 
               log_debug_maybe(("Forwarded %u bytes.", fwd_length));
-              return;
+              return 1;
             }
+        retry:
+          forceful_open ();
         }
-
-    retry:
-      forceful_open ();
     }
+  else
+    return 0;
 }

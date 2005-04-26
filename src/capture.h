@@ -30,4 +30,8 @@ void capture_open (const char *interface, const char *filter);
 void capture_run (void);
 /* Starts capturing (and forwarding) packets. */
 
+extern unsigned capture_log_interval;
+/* After capture_log_interval seconds have elapsed, a new log entry is
+   created. */
+
 #endif /* CAPTURE_H */

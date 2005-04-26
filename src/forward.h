@@ -41,9 +41,10 @@ int forward_open (void);
 /* Create the socket used for forwarding.  Returns 0 on sucess, -1 on
    failure. */
 
-void forward_process (const char *buffer, size_t length);
+int forward_process (const char *buffer, size_t length);
 /* Forwards a single DNS packet.  If the packet does not look like a
-   valid one, it is dropped. */
+   valid one, it is dropped.  Returns nonzero if the packet has actually
+   been forwarded, zero if it has been discarded. */
 
 extern int forward_authoritative_only;
 /* If true, only forward authoritative answers.  (The default is
