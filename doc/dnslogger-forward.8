@@ -73,6 +73,9 @@ to forward only authoritative DNS answers.  Non-authoritative answers
 Drops DNS responses which do not contain any data in the answer
 section.  Truncated responses are still forwarded.
 .TP
+.B -t
+Forward over TCP instead of UDP.
+.TP
 .B -T
 Activates the testing mode (which reads data from standard input).
 .TP
@@ -195,12 +198,13 @@ library does not contain any security defects.  Defects in
 .B libpcap
 may or may not be inherited by
 .BR dnslogger-forward .
+.SH "LOGGING"
+.B dnslogger-forward
+logs to syslog (facility LOG_DAEMON).
 .SH "BUGS"
 It should be possible to run
 .B dnslogger-forward
-as a background daemon.  Logging to
-.B syslog
-should be supported.
+as a background daemon.
 .SH "REPORTING BUGS"
 Report bugs to <dnslogger-bugs@lists.enyo.de>.
 .SH AUTHOR

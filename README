@@ -62,6 +62,9 @@ default is --prefix=/usr/local).  However, dnslogger-forward does not
 need any configuration files and can run from within the build
 directory.
 
+You should be aware that dnslogger-forward logs to syslog, using
+facility LOG_DAEMON (if it is available).
+
 Please note that the program may or may not compile with non-GNU
 compilers.  Errors in this area will be corrected, as time permits.
 Feel free to submit bug reports about such issue to

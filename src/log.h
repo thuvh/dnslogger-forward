@@ -34,7 +34,7 @@ void log_debug (const char *format, ...) ATTRIBUTE_PRINTF_1;
 /* Writes a debugging message based on FORMAT.  Only shown if
    log_debug_enable is true. */
 
-#define LOG_DEBUG(X) do { if (UNLIKELY (log_debug_enable)) log_debug X; } while (0)
+#define log_debug_maybe(X) do { if (UNLIKELY (log_debug_enable)) log_debug X; } while (0)
 /* Version of log_debug that prevents the evaluation of its argument
    if log_debug_enable is false. */
 

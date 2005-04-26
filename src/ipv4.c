@@ -29,7 +29,7 @@ ipv4_header_decode (const char *packet, size_t length, ipv4_header_t *header)
   /* Check minimum header length. */
   if (UNLIKELY (length < sizeof (*header)))
     {
-      LOG_DEBUG (("Short packet of length %u.", length));
+      log_debug_maybe (("Short packet of length %u.", length));
       return 0;
     }
 
@@ -39,22 +39,22 @@ ipv4_header_decode (const char *packet, size_t length, ipv4_header_t *header)
   /* Check IP version and minimum header length. */
   if (UNLIKELY ((header->version_length & 0xf0) != 0x40))
     {
-      LOG_DEBUG (("Non-IP packet, first byte is 0x%02x.", header->version_length));
+      log_debug_maybe (("Non-IP packet, first byte is 0x%02x.", header->version_length));
       return 0;
     }
 
   if (UNLIKELY (IPV4_HEADER_LENGTH(*header) > length))
     {
-      LOG_DEBUG (("Truncated IP header, indicated length is %u, available is %u.",
-                  IPV4_HEADER_LENGTH(*header), length));
+      log_debug_maybe (("Truncated IP header, indicated length is %u, available is %u.",
+                        IPV4_HEADER_LENGTH(*header), length));
       return 0;
     }
 
   /* The checksum vanishes if it is correct. */
   if (UNLIKELY (ipv4_checksum (packet, IPV4_HEADER_LENGTH(*header), 0) != 0))
     {
-      LOG_DEBUG (("Incorrect IP checksum (header length %u, packet length %u).",
-                  IPV4_HEADER_LENGTH(*header), length));
+      log_debug_maybe (("Incorrect IP checksum (header length %u, packet length %u).",
+                        IPV4_HEADER_LENGTH(*header), length));
       return 0;
     }
 
@@ -69,8 +69,8 @@ ipv4_header_decode (const char *packet, size_t length, ipv4_header_t *header)
 
   if (UNLIKELY (header->total_length > length))
     {
-      LOG_DEBUG (("Truncated IP packet, indicated length is %u, available is %u.",
-                  header->total_length, length));
+      log_debug_maybe (("Truncated IP packet, indicated length is %u, available is %u.",
+                        header->total_length, length));
       return 0;
     }
 
@@ -133,9 +133,9 @@ udp_header_decode (const char *packet, size_t length, const ipv4_header_t *ip_he
   /* Check minimum header length. */
   if (UNLIKELY (length < sizeof (*header)))
     {
-      LOG_DEBUG (("Truncated UDP header (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
-                  IPV4_FORMAT_ARGS (ip_header->source),
-                  IPV4_FORMAT_ARGS (ip_header->destination)));
+      log_debug_maybe (("Truncated UDP header (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
+                        IPV4_FORMAT_ARGS (ip_header->source),
+                        IPV4_FORMAT_ARGS (ip_header->destination)));
       return 0;
     }
 
@@ -149,11 +149,11 @@ udp_header_decode (const char *packet, size_t length, const ipv4_header_t *ip_he
   /* Check embedded length. */
   if (UNLIKELY (header->total_length > length))
     {
-      LOG_DEBUG (("Truncated UDP packet (" IPV4_FORMAT " -> " IPV4_FORMAT
-                  ", UDP length %u, available %u).",
-                  IPV4_FORMAT_ARGS (ip_header->source),
-                  IPV4_FORMAT_ARGS (ip_header->destination),
-                  header->total_length, length));
+      log_debug_maybe (("Truncated UDP packet (" IPV4_FORMAT " -> " IPV4_FORMAT
+                        ", UDP length %u, available %u).",
+                        IPV4_FORMAT_ARGS (ip_header->source),
+                        IPV4_FORMAT_ARGS (ip_header->destination),
+                        header->total_length, length));
       return 0;
     }
 
@@ -164,10 +164,10 @@ udp_header_decode (const char *packet, size_t length, const ipv4_header_t *ip_he
   /* Calculate the checksum. */
   if (UNLIKELY (ipv4_checksum (packet, length, ipv4_pseudo_header_checksum (ip_header, header->total_length)) != 0))
     {
-      LOG_DEBUG (("UDP checksum mismatch (" IPV4_FORMAT " -> " IPV4_FORMAT
-                  ", UDP length %u).",
-                  IPV4_FORMAT_ARGS (ip_header->source),
-                  IPV4_FORMAT_ARGS (ip_header->destination), header->total_length));
+      log_debug_maybe (("UDP checksum mismatch (" IPV4_FORMAT " -> " IPV4_FORMAT
+                        ", UDP length %u).",
+                        IPV4_FORMAT_ARGS (ip_header->source),
+                        IPV4_FORMAT_ARGS (ip_header->destination), header->total_length));
       return 0;
     }
 

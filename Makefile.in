@@ -118,6 +118,17 @@ test :
 			echo "FAILED test case: $$x" ; touch testsuite/FAILED ; \
 		fi \
 	done || true
+	@for x in tcp_virgin ; do \
+		$(VALGRIND) ./dnslogger-forward$(exeext) -t -T \
+			< $(srcdir)/testsuite/$$x.in \
+			> testsuite/$$x.out \
+			2>&1 ; \
+		if cmp $(srcdir)/testsuite/$$x.expected testsuite/$$x.out >/dev/null ; then \
+			: ; \
+		else \
+			echo "FAILED test case: $$x" ; touch testsuite/FAILED ; \
+		fi \
+	done || true
 	@if test -f testsuite/FAILED ; then \
 		echo "There were failed test cases." ; exit 1 ; \
 	else \

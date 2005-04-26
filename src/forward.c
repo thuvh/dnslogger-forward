@@ -26,9 +26,12 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <syslog.h>
+#include <unistd.h>
 
 int forward_authoritative_only = 0;
 int forward_without_answers = 1;
+int forward_over_tcp = 0;
 
 static int
 forward_decode_encode (const char* buffer, size_t length, forward_t *forward, size_t *forward_length)
@@ -45,7 +48,7 @@ forward_decode_encode (const char* buffer, size_t length, forward_t *forward, si
   /* Check if we actually have a UDP packet. */
   if (UNLIKELY (ip_header.protocol != 17))
     {
-      LOG_DEBUG (("Unexpected IP protocol %u (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
+      log_debug_maybe (("Unexpected IP protocol %u (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
                   (unsigned)ip_header.protocol,
                   IPV4_FORMAT_ARGS (ip_header.source),
                   IPV4_FORMAT_ARGS (ip_header.destination)));
@@ -63,18 +66,18 @@ forward_decode_encode (const char* buffer, size_t length, forward_t *forward, si
 
   if (! DNS_ANSWER_P (dns_header))
     {
-      LOG_DEBUG (("Dropping question packet (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
-                  IPV4_FORMAT_ARGS (ip_header.source),
-                  IPV4_FORMAT_ARGS (ip_header.destination)));
+      log_debug_maybe (("Dropping question packet (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
+                        IPV4_FORMAT_ARGS (ip_header.source),
+                        IPV4_FORMAT_ARGS (ip_header.destination)));
       return 0;
     }
 
   if (UNLIKELY ((!forward_without_answers) && dns_header.ancount == 0
                 && !DNS_TRUNCATION_P (dns_header)))
     {
-      LOG_DEBUG (("Dropping packet without answers (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
-                  IPV4_FORMAT_ARGS (ip_header.source),
-                  IPV4_FORMAT_ARGS (ip_header.destination)));
+      log_debug_maybe (("Dropping packet without answers (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
+                        IPV4_FORMAT_ARGS (ip_header.source),
+                        IPV4_FORMAT_ARGS (ip_header.destination)));
       return 0;
     }
 
@@ -83,9 +86,9 @@ forward_decode_encode (const char* buffer, size_t length, forward_t *forward, si
   authoritative = DNS_AUTHORITATIVE_P (dns_header);
   if (forward_authoritative_only && !authoritative)
     {
-      LOG_DEBUG (("Dropping non-authoritative DNS packet (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
-                  IPV4_FORMAT_ARGS (ip_header.source),
-                  IPV4_FORMAT_ARGS (ip_header.destination)));
+      log_debug_maybe (("Dropping non-authoritative DNS packet (" IPV4_FORMAT " -> " IPV4_FORMAT ").",
+                        IPV4_FORMAT_ARGS (ip_header.source),
+                        IPV4_FORMAT_ARGS (ip_header.destination)));
       return 0;
     }
 
@@ -102,11 +105,11 @@ forward_decode_encode (const char* buffer, size_t length, forward_t *forward, si
   /* Guard the call to memcpy below. */
   if (UNLIKELY (length > sizeof (forward->payload)))
     {
-      LOG_DEBUG (("Dropping overlong packet (" IPV4_FORMAT " -> " IPV4_FORMAT
-                  ", %u bytes).",
-                  IPV4_FORMAT_ARGS (ip_header.source),
-                  IPV4_FORMAT_ARGS (ip_header.destination),
-                  length));
+      log_debug_maybe (("Dropping overlong packet (" IPV4_FORMAT " -> " IPV4_FORMAT
+                        ", %u bytes).",
+                        IPV4_FORMAT_ARGS (ip_header.source),
+                        IPV4_FORMAT_ARGS (ip_header.destination),
+                        length));
       return 0;
     }
 
@@ -118,23 +121,24 @@ forward_decode_encode (const char* buffer, size_t length, forward_t *forward, si
   return 1;
 }
 
-static int dnslogger_fd;
+static int dnslogger_fd = -1;
 /* File descriptor of the UDP socket leading to the dnslogger server. */
 
-void
-forward_open (const char *hostname, uint16_t port)
-{
-  struct sockaddr_in sin;
+struct sockaddr_in dnslogger_target;
+/* The IPv4 address and port of the target to which we forward packets. */
 
-  memset (&sin, 0, sizeof (sin));
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons (port);
+void
+forward_target (const char *hostname, uint16_t port)
+{
+  memset (&dnslogger_target, 0, sizeof (dnslogger_target));
+  dnslogger_target.sin_family = AF_INET;
+  dnslogger_target.sin_port = htons (port);
 
   {
     unsigned a, b, c, d;
     if (sscanf (hostname, "%u.%u.%u.%u", &a, &b, &c, &d) == 4
         && a <= 255 && b <= 255 && c <= 255 && d <= 255)
-      sin.sin_addr.s_addr = htonl ((a << 24) + (b << 16) + (c << 8) + d);
+      dnslogger_target.sin_addr.s_addr = htonl ((a << 24) + (b << 16) + (c << 8) + d);
     else
       {
         struct hostent *h = gethostbyname (hostname);
@@ -142,16 +146,117 @@ forward_open (const char *hostname, uint16_t port)
         if (h == 0 || h->h_addrtype != AF_INET || *h->h_addr_list == 0)
           log_fatal ("No IPv4 address for host name: %s.", hostname);
 
-        STATIC_MEMCPY (sin.sin_addr, *h->h_addr_list);
+        STATIC_MEMCPY (dnslogger_target.sin_addr, *h->h_addr_list);
       }
   }
+}
 
-  dnslogger_fd = socket (AF_INET, SOCK_DGRAM, 0);
+int
+forward_open (void)
+{
+  if (dnslogger_fd >= 0)
+    close (dnslogger_fd);
+
+  dnslogger_fd
+    = socket (AF_INET, forward_over_tcp ? SOCK_STREAM : SOCK_DGRAM, 0);
   if (dnslogger_fd == -1)
-    log_fatal ("Socket creation failed: %s.", strerror(errno));
+    {
+      syslog (LOG_ERR, "%s socket creation failed: %s.",
+              forward_over_tcp ? "TCP" : "UDP", strerror(errno));
+      return -1;
+    }
 
-  if (connect (dnslogger_fd, (struct sockaddr *)&sin, sizeof (sin)) == -1)
-    log_fatal ("Could not connect forwarding socket: %s.", strerror(errno));
+  if (connect (dnslogger_fd, (struct sockaddr *)&dnslogger_target,
+               sizeof (dnslogger_target)) == -1)
+    {
+      syslog (LOG_ERR, "Could not connect forwarding socket: %s.", strerror(errno));
+      goto error_out;
+    }
+
+  /* In TCP mode, read the service banner.  FIXME: Add a timeout. */
+
+  if (forward_over_tcp)
+    {
+      char buf[256];
+      char *p = buf;
+      char *end = p + sizeof (buf);
+      char *lf;
+      ssize_t result;
+
+      while (p != end)
+        {
+          result = read (dnslogger_fd, p, end - p);
+          if (result < 0)
+            {
+              syslog (LOG_ERR, "Could not read remote banner: %s.",
+                      strerror (errno));
+              goto error_out;
+            }
+          if (result == 0)
+            {
+              syslog (LOG_ERR, "remote host closed the connection");
+              goto error_out;
+            }
+          p += result;
+
+          /* Look for  the CRLF terminator and strip it if it is there.
+             Otherwise, continue reading. */
+
+          lf = memchr (buf, '\n', end - buf);
+          if (!lf)
+            continue;
+          *lf = 0;
+          if (lf != buf && lf[-1] == '\r')
+            lf[-1] = 0;
+
+          /* Replace non-printable characters. */
+
+          for (p = buf; p != lf; ++p)
+            if (*p < ' ' || *p > '~')
+              *p = '.';
+
+          syslog (LOG_NOTICE, "Connected to: %s", buf);
+          return 0;
+        }
+
+      syslog (LOG_ERR, "Remote service banner is too long.");
+      goto error_out;
+    }
+  else
+    /* UDP mode needs no special setup. */
+    return 0;
+
+ error_out:
+  close (dnslogger_fd);
+  dnslogger_fd = -1;
+  return -1;
+}
+
+static void
+forceful_open (void)
+{
+  while (forward_open () < 0)
+    sleep (5);
+}
+
+/* Write LENGTH bytes at BUF to STREAM.
+   Returns 0 on success, -1 on failure. */
+static int
+forceful_write (int stream, const void *buf, size_t length)
+{
+  const char *p = buf;
+  const char* end = p + length;
+  ssize_t result;
+
+  while (p != end)
+    {
+      result = write (stream, p, end - p);
+      if (result < 0)
+        return -1;
+      p += result;
+    }
+
+  return 0;
 }
 
 void
@@ -160,16 +265,52 @@ forward_process (const char *buffer, size_t length)
   forward_t fwd;
   size_t fwd_length;
 
+  if (dnslogger_fd < 0)
+    forceful_open ();
+
   if (LIKELY (forward_decode_encode (buffer, length, &fwd, &fwd_length)))
     {
-      /* We ignore the return value because we cannot easily recover
-         from this error because it is likely that operator
-         intervention is required. */
+      /* Keep sending packets until successful. */
 
-      if (send (dnslogger_fd, &fwd, fwd_length, 0) == -1)
-        LOG_DEBUG(("Forwarding %u bytes failed: %s.",
-                   fwd_length, strerror (errno)));
-      else
-        LOG_DEBUG(("Forwarded %u bytes.", fwd_length));
+      for (;;)
+        {
+          if (forward_over_tcp)
+            {
+              uint16_t len = htons (fwd_length);
+
+              if (UNLIKELY (forceful_write (dnslogger_fd, &len, 2) < 0))
+                {
+                  syslog (LOG_ERR, "could not write record size: %s",
+                        strerror (errno));
+                goto retry;
+              }
+
+              if (UNLIKELY (forceful_write (dnslogger_fd, &fwd, fwd_length) < 0))
+              {
+                syslog (LOG_ERR, "could not write packet: %s",
+                        strerror (errno));
+                goto retry;
+              }
+
+              return;
+            }
+          else
+            {
+              /* UDP mode. */
+
+              if (UNLIKELY (send (dnslogger_fd, &fwd, fwd_length, 0) < 0))
+                {
+                  syslog (LOG_ERR, "could not write packet: %s",
+                          strerror (errno));
+                  goto retry;
+                }
+
+              log_debug_maybe(("Forwarded %u bytes.", fwd_length));
+              return;
+            }
+        }
+
+    retry:
+      forceful_open ();
     }
 }

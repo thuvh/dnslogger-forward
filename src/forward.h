@@ -1,5 +1,5 @@
 /* dnslogger-forward - Forward DNS traffic for analysis
- * Copyright (C) 2004 Florian Weimer
+ * Copyright (C) 2005 Florian Weimer
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,12 +28,18 @@ typedef struct
   ipv4_t nameserver;            /* in network byte order */
   char payload[512];
 } forward_t;
+/* The on-the-wire header.  When forwarding over TCP, a 16-bit
+   big-endian length field is added. */
 
 #define FORWARD_SIGNATURE "DNSXFR01"
 
-void forward_open (const char *hostname, uint16_t port);
-/* Opens the UDP socket which sends data to HOSTNAME on PORT.
-   Terminates on error. */
+void forward_target (const char *hostname, uint16_t port);
+/* Sets the forward target to PORT at HOSTNAME.  Terminates on error
+   (e.g. if HOSTNAME cannot be parsed). */
+
+int forward_open (void);
+/* Create the socket used for forwarding.  Returns 0 on sucess, -1 on
+   failure. */
 
 void forward_process (const char *buffer, size_t length);
 /* Forwards a single DNS packet.  If the packet does not look like a
@@ -45,5 +51,9 @@ extern int forward_authoritative_only;
 
 extern int forward_without_answers;
 /* If true, forward packets without answers (the default). */
+
+extern int forward_over_tcp;
+/* If true, use TCP to forward data instead of UDP. */
+
 
 #endif /* FORWARD_H */

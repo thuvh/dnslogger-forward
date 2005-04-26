@@ -23,8 +23,10 @@
 #include "test.h"
 
 #include "getopt.h"
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 
 static void usage(void) ATTRIBUTE_NORETURN;
 
@@ -40,7 +42,7 @@ main (int argc, char **argv)
   log_set_program (PACKAGE_NAME);
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "ADf:hi:Tv")) != -1)
+  while ((c = getopt (argc, argv, "ADf:hi:tTv")) != -1)
     switch (c)
       {
       case 'A':
@@ -63,6 +65,10 @@ main (int argc, char **argv)
       case 'i':
         if (*optarg)
           opt_interface = optarg;
+        break;
+
+      case 't':
+        forward_over_tcp = 1;
         break;
 
       case 'T':
@@ -88,7 +94,20 @@ main (int argc, char **argv)
 
   if (sscanf (argv[optind + 1], "%u", &port) != 1)
     log_fatal ("Invalid port number '%s'.", argv[optind + 1]);
-  forward_open (argv[optind], port);
+
+  forward_target (argv[optind], port);
+
+  /* General initialization. */
+
+#ifdef LOG_DAEMON
+  openlog ("dnslogger-forward", LOG_PID, LOG_DAEMON);
+#else
+  openlog ("dnslogger-forward", LOG_PID, 0);
+#endif
+
+  signal (SIGPIPE, SIG_IGN);
+
+  /* Start capturing packets. */
 
   capture_open (opt_interface, opt_filter);
   capture_run ();
@@ -113,6 +132,7 @@ usage(void)
   puts ("  -f EXPRESSION   filter expression (BPF syntax)");
   puts ("  -A              forward authoritative answers only");
   puts ("  -D              do not forward empty answers");
+  puts ("  -t              forward data over TCP (default is UDP)");
   puts ("  -T              enable testing mode (reads from standard input)");
   puts ("  -v              verbose output, include debugging messages");
   puts ("");
