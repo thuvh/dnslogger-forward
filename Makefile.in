@@ -49,6 +49,7 @@ src_obj_files := $(patsubst %.c, src/%.o, $(SRC_C_FILES))
 all : dnslogger-forward$(exeext)
 
 install:
+	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man8dir)
 	$(INSTALL) -m 755 dnslogger-forward$(exeext) $(DESTDIR)$(bindir)/dnslogger-forward$(exeext)
 	$(INSTALL) -m 644 $(srcdir)/doc/dnslogger-forward.8 $(DESTDIR)$(man8dir)/dnslogger-forward.8
 
