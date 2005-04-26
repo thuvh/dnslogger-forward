@@ -31,6 +31,7 @@ AC_SEARCH_LIBS(connect, socket)
 AC_SEARCH_LIBS(pcap_open_live, pcap)
 
 AC_CHECK_FUNCS([pcap_datalink_val_to_name])
+AC_CHECK_FUNCS([pcap_breakloop])
 
 dnl Handle <stdint.h>.
 AH_BOTTOM([/* Include <stdint.h> where available.
