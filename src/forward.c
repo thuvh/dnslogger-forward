@@ -248,6 +248,8 @@ forward_open (void)
 static void
 forceful_open (void)
 {
+  /* Add a delay between opening connections, to avoid flooding the
+     target hosts with packets. */
   while (forward_open () < 0)
     sleep (5);
 }
@@ -321,7 +323,12 @@ forward_process (const char *buffer, size_t length)
               log_debug_maybe(("Forwarded %u bytes.", fwd_length));
               return 1;
             }
+
         retry:
+          /* We need a delay before the open call so that we won't
+             flood the dnslogger host with packets when the open
+             succeeds, but the first write fails immediately. */
+          sleep (5);
           forceful_open ();
         }
     }
