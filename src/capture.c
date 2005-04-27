@@ -169,10 +169,14 @@ callback (u_char *closure, const struct pcap_pkthdr *header, const u_char *packe
   /* Write a log checkpoint if the timeout has passed. */
   if (header->ts.tv_sec > last_checkpoint + capture_log_interval)
     {
+      struct pcap_stat ps;
+
+      pcap_stats (pcap, &ps);
       syslog (LOG_INFO, "%u packets/%u bytes received, "
-              "%u packets/%u bytes forwarded",
+              "%u packets/%u bytes forwarded, %u packets dropped",
               packets_received, bytes_received,
-              packets_forwarded, bytes_forwarded);
+              packets_forwarded, bytes_forwarded,
+              (unsigned)ps.ps_drop);
 
       last_checkpoint = header->ts.tv_sec;
       packets_received = bytes_received = 0;

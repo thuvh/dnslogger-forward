@@ -243,13 +243,17 @@ collector at
 .IP
 .PD 0
 .B \fIx\fP packets/\fIy\fP bytes received,
-.B \fIx\fP packets/\fIy\fP bytes forwarded
+.B \fIx\fP packets/\fIy\fP bytes forwarded,
+.B \fIx\fP packets dropped
 .PD
 .PP
 This is an example log checkpoint which is written at the interval
 specified with the
 .B -L
-option.
+option.  If significant amounts of packets are dropped and you are
+using TCP mode (the
+.B -t
+option), consider switching to UDP mode.
 .IP
 .PD 0
 .B could not write packet:
