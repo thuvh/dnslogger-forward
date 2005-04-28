@@ -55,6 +55,7 @@ static unsigned packets_received = 0;
 static unsigned bytes_received = 0;
 static unsigned packets_forwarded = 0;
 static unsigned bytes_forwarded = 0;
+static unsigned packets_dropped = 0;
 
 void
 capture_run (void)
@@ -141,6 +142,9 @@ void open_and_wait (void)
 #endif
       }
 
+    /* No packets have been dropped so far. */
+    packets_dropped = 0;
+
     /* We have successfully set up the capture process. */
     break;
   }
@@ -176,10 +180,16 @@ callback (u_char *closure, const struct pcap_pkthdr *header, const u_char *packe
               "%u packets/%u bytes forwarded, %u packets dropped",
               packets_received, bytes_received,
               packets_forwarded, bytes_forwarded,
-              (unsigned)ps.ps_drop);
+              (unsigned)(ps.ps_drop - packets_dropped));
 
       last_checkpoint = header->ts.tv_sec;
       packets_received = bytes_received = 0;
       packets_forwarded = bytes_forwarded = 0;
+#ifdef __linux__
+      /* On Linux, the dropped packet count is automatically reset. */
+      packets_dropped = 0;
+#else
+      packets_dropped = ps.ps_drop;
+#endif
     }
 }
