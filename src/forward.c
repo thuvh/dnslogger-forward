@@ -152,6 +152,25 @@ forward_target (const char *hostname, uint16_t port)
   }
 }
 
+static struct sockaddr_in forward_source;
+static int forward_source_set = 0;
+
+void
+forward_set_source (const char *ip)
+{
+  unsigned a, b, c, d;
+  if (sscanf (ip, "%u.%u.%u.%u", &a, &b, &c, &d) == 4
+      && a <= 255 && b <= 255 && c <= 255 && d <= 255)
+    {
+      forward_source.sin_family = AF_INET;
+      forward_source.sin_addr.s_addr
+        = htonl ((a << 24) + (b << 16) + (c << 8) + d);
+      forward_source_set = 1;
+    }
+  else
+    log_fatal ("Invalid IPv4 address: %s", ip);
+}
+
 int
 forward_open (void)
 {
@@ -166,6 +185,15 @@ forward_open (void)
               forward_over_tcp ? "TCP" : "UDP", strerror(errno));
       return -1;
     }
+
+  if (forward_source_set)
+    if (bind (dnslogger_fd, (struct sockaddr *)&forward_source,
+              sizeof (forward_source)) == -1)
+      {
+        syslog (LOG_ERR, "Could not bind to source address: %s.",
+                strerror(errno));
+        goto error_out;
+      }
 
   if (connect (dnslogger_fd, (struct sockaddr *)&dnslogger_target,
                sizeof (dnslogger_target)) == -1)

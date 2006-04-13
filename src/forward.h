@@ -37,6 +37,9 @@ void forward_target (const char *hostname, uint16_t port);
 /* Sets the forward target to PORT at HOSTNAME.  Terminates on error
    (e.g. if HOSTNAME cannot be parsed). */
 
+void forward_set_source (const char *ip);
+/* Sets the source IP address for forwarding packets. */
+
 int forward_open (void);
 /* Create the socket used for forwarding.  Returns 0 on sucess, -1 on
    failure. */

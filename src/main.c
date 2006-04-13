@@ -42,12 +42,18 @@ main (int argc, char **argv)
   log_set_program (PACKAGE_NAME);
   opterr = 0;
 
-  while ((c = getopt (argc, argv, "ADf:hi:L:tTv")) != -1)
+  while ((c = getopt (argc, argv, "Ab:Df:hi:L:tTv")) != -1)
     switch (c)
       {
       case 'A':
         forward_authoritative_only = 1;
         break;
+
+      case 'b':
+        forward_set_source (optarg);
+        break;
+
+    break;
 
       case 'D':
         forward_without_answers = 0;
