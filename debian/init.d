@@ -21,6 +21,12 @@ fi
 
 set -e
 
+start_daemon () {
+    start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
+	--make-pidfile --background --exec $DAEMON \
+	-- -i "$INTERFACE" -f "$FILTER" $OPTIONS "$HOST" "$PORT"
+}
+
 case "$1" in
   start)
 	echo -n "Starting $DESC: "
@@ -28,24 +34,21 @@ case "$1" in
 	    echo "You must configure HOST and PORT in $CONFIG."
 	    exit 0
 	fi
-	start-stop-daemon --start --quiet --pidfile /var/run/$NAME.pid \
-	    --make-pidfile --background --exec $DAEMON \
-	    -- -i "$INTERFACE" -f "$FILTER" $OPTIONS "$HOST" "$PORT"
+	start_daemon
 	echo "$NAME."
 	;;
   stop)
 	echo -n "Stopping $DESC: "
-	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
-		--exec $DAEMON
+	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid --oknodo \
+	    --exec $DAEMON
 	echo "$NAME."
 	;;
   restart|force-reload)
 	echo -n "Restarting $DESC: "
-	start-stop-daemon --stop --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON
+	start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid --oknodo \
+	    --exec $DAEMON
 	sleep 1
-	start-stop-daemon --start --quiet --pidfile \
-		/var/run/$NAME.pid --exec $DAEMON -- $DAEMON_OPTS
+	start_daemon
 	echo "$NAME."
 	;;
   *)
