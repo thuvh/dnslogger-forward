@@ -1,6 +1,7 @@
 dnslogger-forward (0.1.10) unstable; urgency=low
 
   * Add the -b command line option.
+  * Fix init scripts.
 
  -- Florian Weimer <fw@deneb.enyo.de>  Thu, 13 Apr 2006 14:56:55 +0200
 
